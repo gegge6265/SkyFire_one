@@ -4524,6 +4524,27 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                     unitTarget->RemoveSingleAuraFromStack(24575, 0);
                     unitTarget->RemoveSingleAuraFromStack(24575, 1);
                     return;
+				// PoisonousBlood
+				case 24320:
+				{
+					float radius = GetSpellRadius(m_spellInfo, effIndex, false);
+                    if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->GetDistance(m_caster) <= radius && unitTarget != m_caster)
+                        unitTarget->CastSpell(unitTarget, 24321, true);
+
+                    break;
+				}
+				// BloodSiphon
+				case 24324:
+				{
+					float radius = GetSpellRadius(m_spellInfo, effIndex, false);
+                    if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->GetDistance(m_caster) <= radius && unitTarget != m_caster)
+                        if (unitTarget->HasAura(24321,0)){
+							unitTarget->CastSpell(m_caster, 24323, true);
+						}
+						else
+							unitTarget->CastSpell(m_caster, 24322, true);
+					break;
+				}
                 // Pirate Costume
                 case 24717:
                 {

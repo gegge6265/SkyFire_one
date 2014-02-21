@@ -2355,6 +2355,16 @@ void SpellMgr::LoadSpellCustomAttr()
         case 35460: // Fury of the Dreghood Elders
             spellInfo->EffectImplicitTargetA[1] = TARGET_TYPE_UNIT_TARGET;
             break;
+		case 24322: // Blood Siphon
+        case 24323: // Blood Siphon (Poison)
+			spellInfo->AttributesEx2 += SPELL_ATTR_EX2_HEALTH_FUNNEL;
+			//spellInfo->AttributesEx5=SPELL_ATTR_EX5_USABLE_WHILE_STUNNED;
+            break;
+        case 24324: // Blood Siphon (Hakkar)
+            spellInfo->EffectImplicitTargetA[1] = TARGET_UNIT_AREA_ENEMY_SRC;
+            spellInfo->EffectImplicitTargetB[1] = TARGET_SRC_CASTER;
+            spellInfo->EffectRadiusIndex[1] = 12; //11
+            break;
         default:
             break;
         }

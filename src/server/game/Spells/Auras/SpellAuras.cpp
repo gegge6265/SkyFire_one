@@ -115,7 +115,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         // 59 SPELL_AURA_MOD_DAMAGE_DONE_CREATURE implemented in Unit::MeleeDamageBonus and Unit::SpellDamageBonus
     &Aura::HandleAuraModPacifyAndSilence,                   // 60 SPELL_AURA_MOD_PACIFY_SILENCE
     &Aura::HandleAuraModScale,                              // 61 SPELL_AURA_MOD_SCALE
-    &Aura::HandleNULL,                                      // 62 SPELL_AURA_PERIODIC_HEALTH_FUNNEL
+    &Aura::HandlePeriodicHealthFunnel,                      // 62 SPELL_AURA_PERIODIC_HEALTH_FUNNEL
     &Aura::HandleUnused,                                    // 63 SPELL_AURA_PERIODIC_MANA_FUNNEL obsolete?
     &Aura::HandlePeriodicManaLeech,                         // 64 SPELL_AURA_PERIODIC_MANA_LEECH
     &Aura::HandleModCastingSpeed,                           // 65 SPELL_AURA_MOD_CASTING_SPEED
@@ -4306,6 +4306,14 @@ void Aura::HandlePeriodicManaLeech(bool apply, bool /*Real*/)
     m_isPeriodic = apply;
 }
 
+void Aura::HandlePeriodicHealthFunnel(bool apply, bool /*Real*/)
+{
+	if(m_periodicTimer <= 0)
+		m_periodicTimer += m_amplitude;
+
+	m_isPeriodic = apply;
+}
+
 /*********************************************************/
 /***                  MODIFY STATS                     ***/
 /*********************************************************/
@@ -5991,6 +5999,41 @@ void Aura::PeriodicTick()
                 pCaster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, pdamage, BASE_ATTACK, spellProto);
             break;
         }
+		case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
+			{
+				sLog->outError("sup2");
+				//TODO: Figure this out
+				Unit *pCaster = GetCaster();
+				if (!pCaster)
+					return;
+				
+				if (!pCaster->isAlive())
+					return;
+
+				uint32 pdamage = GetModifierValue() > 0 ? GetModifierValue() : 0;
+
+				sLog->outError("%i",pdamage);
+				uint32 gain_multiplier = GetSpellProto()->EffectMultipleValue[GetEffIndex()];
+
+				//check absorb
+				uint32 absorb=0;
+				uint32 resist=0;
+
+				//NULL pointer crashes server?
+				pCaster->CalcAbsorbResist(pCaster, GetSpellSchoolMask(GetSpellProto()), DOT, pdamage, &absorb, &resist);
+
+				//damage kills player
+				if (pCaster->GetHealth() < pdamage)
+                pdamage = uint32(pCaster->GetHealth());
+
+				pCaster->ModifyHealth(-(int32)(pdamage-absorb));
+				m_target->SendSpellNonMeleeDamageLog(pCaster, GetId(), pdamage, GetSpellSchoolMask(GetSpellProto()), absorb, 0, false, 0);
+
+				m_target->ModifyHealth((int32)(pdamage * gain_multiplier));
+				pCaster->SendHealSpellLog(m_target, GetSpellProto()->Id, pdamage * gain_multiplier);
+				
+				break;
+			}
         case SPELL_AURA_PERIODIC_MANA_LEECH:
         {
             Unit *pCaster = GetCaster();
