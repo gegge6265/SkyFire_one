@@ -113,6 +113,10 @@ struct instance_zulgurub : public ScriptedInstance
             case TYPE_OHGAN:
                 m_auiEncounter[7] = uiData;
                 break;
+
+			case TYPE_MANDOKIR:
+				m_auiEncounter[8] = uiData;
+				break;
         }
     }
 
@@ -149,6 +153,8 @@ struct instance_zulgurub : public ScriptedInstance
                 return m_auiEncounter[6];
             case TYPE_OHGAN:
                 return m_auiEncounter[7];
+			case TYPE_MANDOKIR:
+				return m_auiEncounter[8];
         }
         return 0;
     }
