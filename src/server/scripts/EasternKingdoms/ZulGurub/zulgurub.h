@@ -42,7 +42,8 @@ enum eTypes
     DATA_JINDO              = 10,
     DATA_LORKHAN            = 11,
     DATA_THEKAL             = 12,
-    DATA_ZATH               = 13
+    DATA_ZATH               = 13,
+	DATA_HAKKAR             = 14
 };
 
 #endif
