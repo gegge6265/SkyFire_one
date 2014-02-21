@@ -41,6 +41,8 @@ struct instance_zulgurub : public ScriptedInstance
     uint64 m_uiThekalGUID;
     uint64 m_uiJindoGUID;
 
+	std::vector<uint64> spirit_revive;
+
     void Initialize()
     {
         memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
@@ -49,6 +51,8 @@ struct instance_zulgurub : public ScriptedInstance
         m_uiZathGUID = 0;
         m_uiThekalGUID = 0;
         m_uiJindoGUID = 0;
+
+		spirit_revive.clear();
     }
 
     bool IsEncounterInProgress() const
@@ -112,6 +116,19 @@ struct instance_zulgurub : public ScriptedInstance
         }
     }
 
+	void SetData64(uint32 uiType, uint64 uiData)
+    {
+        switch (uiType)
+        {
+			case DATA_SPIRIT_REVIVE:
+				spirit_revive.push_back(uiData);
+				break;
+			case DATA_SPIRIT_CLEAR:
+				spirit_revive.clear();
+				break;
+		}
+    }
+
     uint32 GetData(uint32 uiType)
     {
         switch (uiType)
@@ -148,6 +165,16 @@ struct instance_zulgurub : public ScriptedInstance
                 return m_uiThekalGUID;
             case DATA_JINDO:
                 return m_uiJindoGUID;
+			case DATA_SPIRIT_REVIVE:
+				{
+					if (!spirit_revive.empty())
+					{
+					uint64 temp = spirit_revive.front();
+					spirit_revive.pop_back();
+					return temp;
+					}
+					else return 0;
+				}
         }
         return 0;
     }

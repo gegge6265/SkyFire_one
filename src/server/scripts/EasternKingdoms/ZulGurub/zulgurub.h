@@ -1,4 +1,4 @@
- /*
+/*
   * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
   * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
   * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
@@ -33,7 +33,10 @@ enum eTypes
     TYPE_THEKAL             = 6,
     TYPE_ZATH               = 7,
     TYPE_LORKHAN            = 8,
-
+	TYPE_MANDOKIR			= 20,
+    
+	DATA_SPIRIT_REVIVE		= 18,
+	DATA_SPIRIT_CLEAR		= 19,
     DATA_JINDO              = 10,
     DATA_LORKHAN            = 11,
     DATA_THEKAL             = 12,
@@ -41,4 +44,3 @@ enum eTypes
 };
 
 #endif
-
