@@ -28,6 +28,24 @@ EndScriptData */
 #include "ScriptPCH.h"
 #include "zulgurub.h"
 
+enum areatrigger
+{
+    AT_ALTAR_OF_BLOOD = 1,
+    AT_ZULGURUB_ENTRANCE = 2
+};
+
+enum triggered
+{
+    NOT_TRIGGERED = 0,
+    TRIGGERED = 1
+};
+
+enum Texts
+{
+    SAY_MINION_DESTROY       =  -1309022,                //where does it belong?    upon entering the altar of blood (Areatrigger ID 3960)
+    SAY_PROTECT_ALTAR        =  -1309023                //where does it belong?     upon entering ZG (Areatrigger ID 3930)
+};
+
 struct instance_zulgurub : public ScriptedInstance
 {
     instance_zulgurub(Map* pMap) : ScriptedInstance(pMap) {Initialize();};
@@ -41,6 +59,8 @@ struct instance_zulgurub : public ScriptedInstance
     uint64 m_uiThekalGUID;
     uint64 m_uiJindoGUID;
 
+	uint32 b_at_altar_of_blood;
+    uint32 b_at_zulgurub_entrance;
 	std::vector<uint64> spirit_revive;
 
     void Initialize()
@@ -53,6 +73,9 @@ struct instance_zulgurub : public ScriptedInstance
         m_uiJindoGUID = 0;
 
 		spirit_revive.clear();
+
+		b_at_altar_of_blood = NOT_TRIGGERED;
+        b_at_zulgurub_entrance = NOT_TRIGGERED;
     }
 
     bool IsEncounterInProgress() const
@@ -117,6 +140,14 @@ struct instance_zulgurub : public ScriptedInstance
 			case TYPE_MANDOKIR:
 				m_auiEncounter[8] = uiData;
 				break;
+
+			case TYPE_AT_ALTAR:
+                b_at_altar_of_blood = uiData;
+                break;
+
+            case TYPE_AT_ENTRANCE:
+                b_at_zulgurub_entrance = uiData;
+                break;
         }
     }
 
@@ -155,6 +186,10 @@ struct instance_zulgurub : public ScriptedInstance
                 return m_auiEncounter[7];
 			case TYPE_MANDOKIR:
 				return m_auiEncounter[8];
+			case TYPE_AT_ALTAR:
+                return b_at_altar_of_blood;
+            case TYPE_AT_ENTRANCE:
+                return b_at_zulgurub_entrance;
         }
         return 0;
     }
@@ -186,6 +221,52 @@ struct instance_zulgurub : public ScriptedInstance
     }
 };
 
+bool AreaTrigger_at_altar_of_blood(Player* player, const AreaTriggerEntry* /*pAt*/)
+{
+    ScriptedInstance *instance;
+
+    instance = player->GetInstanceScript();
+
+    if (instance->GetData(TYPE_AT_ALTAR) == NOT_TRIGGERED)
+    {
+        if (instance)
+        {
+            if(uint64 HakkarGUID = instance->GetData64(DATA_HAKKAR))
+                if (Unit* hTemp = Unit::GetUnit(*player, HakkarGUID))                
+                    if (hTemp->isAlive())
+                    {
+                        hTemp->MonsterYellToZone(SAY_MINION_DESTROY,LANG_UNIVERSAL,player->GetGUID());
+                        instance->SetData(TYPE_AT_ALTAR,TRIGGERED);
+                        return true;
+                    }
+        }
+    }
+    return false;
+}
+
+bool AreaTrigger_at_zulgurub_entrance(Player* player, const AreaTriggerEntry* /*pAt*/)
+{
+    ScriptedInstance *instance;
+
+    instance = player->GetInstanceScript();
+
+    if (instance->GetData(TYPE_AT_ENTRANCE) == NOT_TRIGGERED)
+    {
+        if (instance)
+        {
+            if(uint64 HakkarGUID = instance->GetData64(DATA_HAKKAR))
+                if (Unit* hTemp = Unit::GetUnit(*player, HakkarGUID))                
+                    if (hTemp->isAlive())
+                    {
+                        hTemp->MonsterYellToZone(SAY_PROTECT_ALTAR,LANG_UNIVERSAL,player->GetGUID());
+                        instance->SetData(TYPE_AT_ENTRANCE,TRIGGERED);
+                        return true;
+                    }
+        }
+    }
+    return false;
+}
+
 InstanceScript* GetInstanceData_instance_zulgurub(Map* pMap)
 {
     return new instance_zulgurub(pMap);
@@ -197,6 +278,16 @@ void AddSC_instance_zulgurub()
     newscript = new Script;
     newscript->Name = "instance_zulgurub";
     newscript->GetInstanceScript = &GetInstanceData_instance_zulgurub;
+    newscript->RegisterSelf();
+
+	newscript = new Script;
+    newscript->Name = "at_altar_of_blood";
+    newscript->pAreaTrigger = &AreaTrigger_at_altar_of_blood;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "at_zulgurub_entrance";
+    newscript->pAreaTrigger = &AreaTrigger_at_zulgurub_entrance;
     newscript->RegisterSelf();
 }
 

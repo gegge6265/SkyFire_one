@@ -34,6 +34,8 @@ enum eTypes
     TYPE_ZATH               = 7,
     TYPE_LORKHAN            = 8,
 	TYPE_MANDOKIR			= 20,
+	TYPE_AT_ALTAR           = 15,
+    TYPE_AT_ENTRANCE        = 16,
     
 	DATA_SPIRIT_REVIVE		= 18,
 	DATA_SPIRIT_CLEAR		= 19,
