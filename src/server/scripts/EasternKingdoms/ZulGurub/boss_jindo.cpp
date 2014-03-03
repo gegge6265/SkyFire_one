@@ -28,7 +28,10 @@ EndScriptData */
 #include "ScriptPCH.h"
 #include "zulgurub.h"
 
-#define SAY_AGGRO                       -1309014
+
+enum Texts{
+	SAY_AGGRO = -1309014
+};
 
 enum Spells{
 
