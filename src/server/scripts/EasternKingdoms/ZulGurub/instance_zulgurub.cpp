@@ -84,7 +84,7 @@ struct instance_zulgurub : public ScriptedInstance
         return false;
     }
 
-    void OnCreatureCreate(Creature* creature, bool /*add*/)
+    void OnCreatureCreate(Creature* creature)
     {
         switch (creature->GetEntry())
         {
@@ -92,6 +92,7 @@ struct instance_zulgurub : public ScriptedInstance
             case 11348: m_uiZathGUID = creature->GetGUID(); break;
             case 14509: m_uiThekalGUID = creature->GetGUID(); break;
             case 11380: m_uiJindoGUID = creature->GetGUID(); break;
+			case 14826: creature->SetRespawnDelay(8); creature->SetCorpseDelay(2); break;
             case 14515:
             if (m_auiEncounter[0] >= IN_PROGRESS)
                 creature->DisappearAndDie();

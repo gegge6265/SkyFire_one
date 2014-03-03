@@ -30,18 +30,23 @@ EndScriptData */
 
 #define SAY_AGGRO                       -1309014
 
-#define SPELL_BRAINWASHTOTEM            24262
-#define SPELL_POWERFULLHEALINGWARD      24309               //We will not use this spell. We will summon a totem by script cause the spell totems will not cast.
-#define SPELL_HEX                       24053
-#define SPELL_DELUSIONSOFJINDO          24306
-#define SPELL_SHADEOFJINDO              24308               //We will not use this spell. We will summon a shade by script.
+enum Spells{
 
-//Healing Ward Spell
-#define SPELL_HEAL                      38588               //Totems are not working right. Right heal spell ID is 24311 but this spell is not casting...
+	SPELL_HEX = 24053,
+	SPELL_DELUSIONSOFJINDO = 24306,
+	SPELL_SUMMONBRAINWASHTOTEM = 24262,
+	SPELL_SUMMONHEALINGWARD = 24309,
 
-//Shade of Jindo Spell
-#define SPELL_SHADOWSHOCK               19460
-#define SPELL_INVISIBLE                 24699
+	//Shade
+	SPELL_SHADOWSHOCK = 24458,
+	SPELL_INVISIBLE = 24307,
+	SPELL_SHADESHADOW = 24313,
+
+	//Totems
+	SPELL_BRAINWASH = 24261,
+	SPELL_HEALWARD = 24311
+};
+
 
 struct boss_jindoAI : public ScriptedAI
 {
@@ -53,6 +58,8 @@ struct boss_jindoAI : public ScriptedAI
     uint32 Delusions_Timer;
     uint32 Teleport_Timer;
 
+	std::vector<Creature*> Shades;
+
     void Reset()
     {
         BrainWashTotem_Timer = 20000;
@@ -60,6 +67,9 @@ struct boss_jindoAI : public ScriptedAI
         Hex_Timer = 8000;
         Delusions_Timer = 10000;
         Teleport_Timer = 5000;
+
+		for (auto& i: Shades)
+			i->DisappearAndDie();
     }
 
     void EnterCombat(Unit * /*who*/)
@@ -72,21 +82,22 @@ struct boss_jindoAI : public ScriptedAI
         if (!UpdateVictim())
             return;
 
-        //BrainWashTotem_Timer
+
+		//BrainWashTotem_Timer
         if (BrainWashTotem_Timer <= diff)
         {
-            DoCast(me, SPELL_BRAINWASHTOTEM);
+        	DoCast(SPELL_SUMMONBRAINWASHTOTEM);
             BrainWashTotem_Timer = 18000 + rand()%8000;
         } else BrainWashTotem_Timer -= diff;
-
-        //HealingWard_Timer
+		
+		
+		//HealingWard_Timer
         if (HealingWard_Timer <= diff)
         {
-            //DoCast(me, SPELL_POWERFULLHEALINGWARD);
-            me->SummonCreature(14987, me->GetPositionX()+3, me->GetPositionY()-2, me->GetPositionZ(), 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 30000);
+            DoCast(SPELL_SUMMONHEALINGWARD);
             HealingWard_Timer = 14000 + rand()%6000;
         } else HealingWard_Timer -= diff;
-
+		
         //Hex_Timer
         if (Hex_Timer <= diff)
         {
@@ -97,7 +108,7 @@ struct boss_jindoAI : public ScriptedAI
 
             Hex_Timer = 12000 + rand()%8000;
         } else Hex_Timer -= diff;
-
+		
         //Casting the delusion curse with a shade. So shade will attack the same target with the curse.
         if (Delusions_Timer <= diff)
         {
@@ -105,15 +116,19 @@ struct boss_jindoAI : public ScriptedAI
             {
                 DoCast(pTarget, SPELL_DELUSIONSOFJINDO);
 
-                Creature *Shade = me->SummonCreature(14986, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Shade)
-                    Shade->AI()->AttackStart(pTarget);
+                Creature *Shade = me->SummonCreature(14986, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_CORPSE_DESPAWN, 5000);
+                if (Shade){
+					Shade->AI()->AttackStart(pTarget);
+					Shades.emplace_back(Shade);
+				}
+                    
             }
 
             Delusions_Timer = 4000 + rand()%8000;
         } else Delusions_Timer -= diff;
-
-        //Teleporting a random gamer and spawning 9 skeletons that will attack this gamer
+		
+		
+        //Teleporting a random player into the pit
         if (Teleport_Timer <= diff)
         {
             Unit *pTarget = NULL;
@@ -124,41 +139,56 @@ struct boss_jindoAI : public ScriptedAI
 
                 if (DoGetThreat(me->getVictim()))
                     DoModifyThreatPercent(pTarget,-100);
-
-                Creature *Skeletons;
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX()+2, pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX()-2, pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX()+4, pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX()-4, pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX(), pTarget->GetPositionY()+2, pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX(), pTarget->GetPositionY()-2, pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX(), pTarget->GetPositionY()+4, pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX(), pTarget->GetPositionY()-4, pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
-                Skeletons = me->SummonCreature(14826, pTarget->GetPositionX()+3, pTarget->GetPositionY(), pTarget->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
-                if (Skeletons)
-                    Skeletons->AI()->AttackStart(pTarget);
             }
 
             Teleport_Timer = 15000 + rand()%8000;
         } else Teleport_Timer -= diff;
 
         DoMeleeAttackIfReady();
+    }
+};
+
+
+//BrainWash Totem
+struct mob_brain_wash_totemAI : public ScriptedAI
+{
+	mob_brain_wash_totemAI(Creature *c) : ScriptedAI(c)
+    {
+        instance = c->GetInstanceScript();
+    }
+
+    bool channel;
+
+    ScriptedInstance *instance;
+
+    void Reset()
+	{
+		channel = false;
+	}
+
+    void UpdateAI (const uint32 diff)
+    {
+        // Initiate Channel
+        if (!channel)
+        {
+			// we need to select a unit within 100yards even though it is not on the threat list yet
+			// is there an easier way for this?
+
+			// get its owners threat table
+			std::list<HostileReference*>& m_threatlist = me->GetCharmerOrOwner()->getThreatManager().getThreatList();
+
+            // add players to its own list
+            for (std::list<HostileReference*>::iterator itr = m_threatlist.begin(); itr != m_threatlist.end(); ++itr)
+            {
+				Unit *pTarget = Unit::GetUnit(*me, (*itr)->getUnitGuid());
+					if (pTarget && pTarget->GetTypeId() == TYPEID_PLAYER)
+						me->AddThreat(pTarget,0);
+            }
+
+			if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+               DoCast(pTarget, SPELL_BRAINWASH);
+            channel = true;
+        }
     }
 };
 
@@ -179,25 +209,15 @@ struct mob_healing_wardAI : public ScriptedAI
         Heal_Timer = 2000;
     }
 
-    void EnterCombat(Unit * /*who*/)
-    {
-    }
-
     void UpdateAI (const uint32 diff)
     {
         //Heal_Timer
         if (Heal_Timer <= diff)
-        {
-            if (instance)
-            {
-                Unit *pJindo = Unit::GetUnit((*me), instance->GetData64(DATA_JINDO));
-                if (pJindo)
-                    DoCast(pJindo, SPELL_HEAL);
-            }
-            Heal_Timer = 3000;
-        } else Heal_Timer -= diff;
-
-        DoMeleeAttackIfReady();
+		{
+			me->CastSpell((Unit*)NULL,SPELL_HEALWARD,false);
+			//DoCast(SPELL_HEALWARD); //DoCast needs to support non targeted spells 
+			Heal_Timer = 3000;
+		} else Heal_Timer -= diff;
     }
 };
 
@@ -212,14 +232,14 @@ struct mob_shade_of_jindoAI : public ScriptedAI
     {
         ShadowShock_Timer = 1000;
         DoCast(me, SPELL_INVISIBLE, true);
+		DoCast(me, SPELL_SHADESHADOW, true);
     }
-
-    void EnterCombat(Unit * /*who*/){}
 
     void UpdateAI (const uint32 diff)
     {
-        //ShadowShock_Timer
-        if (ShadowShock_Timer <= diff)
+
+		//ShadowShock_Timer
+		if (ShadowShock_Timer <= diff)
         {
             DoCast(me->getVictim(), SPELL_SHADOWSHOCK);
             ShadowShock_Timer = 2000;
@@ -229,9 +249,15 @@ struct mob_shade_of_jindoAI : public ScriptedAI
     }
 };
 
+
 CreatureAI* GetAI_boss_jindo(Creature* creature)
 {
     return new boss_jindoAI (creature);
+}
+
+CreatureAI* GetAI_mob_brain_wash_totem(Creature* creature)
+{
+    return new mob_brain_wash_totemAI (creature);
 }
 
 CreatureAI* GetAI_mob_healing_ward(Creature* creature)
@@ -253,6 +279,11 @@ void AddSC_boss_jindo()
     newscript->GetAI = &GetAI_boss_jindo;
     newscript->RegisterSelf();
 
+	newscript = new Script;
+    newscript->Name = "mob_brain_wash_totem";
+    newscript->GetAI = &GetAI_mob_brain_wash_totem;
+    newscript->RegisterSelf();
+
     newscript = new Script;
     newscript->Name = "mob_healing_ward";
     newscript->GetAI = &GetAI_mob_healing_ward;
@@ -262,5 +293,6 @@ void AddSC_boss_jindo()
     newscript->Name = "mob_shade_of_jindo";
     newscript->GetAI = &GetAI_mob_shade_of_jindo;
     newscript->RegisterSelf();
+
 }
 

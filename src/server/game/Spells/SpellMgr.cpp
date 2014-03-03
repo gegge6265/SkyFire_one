@@ -2365,6 +2365,9 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->EffectImplicitTargetB[1] = TARGET_SRC_CASTER;
             spellInfo->EffectRadiusIndex[1] = 12; //11
             break;
+		case 24262: // Summon Brain Wash Totem
+			spellInfo->EffectBasePoints[0] = 0; //field is not supposed to alter the amount of summoned creatures. what is it supposed to be used for though
+			break;
         default:
             break;
         }

@@ -3266,7 +3266,7 @@ void Spell::EffectApplyAreaAura(SpellEffIndex effIndex)
 
 void Spell::EffectSummonType(SpellEffIndex effIndex)
 {
-    uint32 entry = m_spellInfo->EffectMiscValue[effIndex];
+	uint32 entry = m_spellInfo->EffectMiscValue[effIndex];
     if (!entry)
         return;
 
@@ -3310,6 +3310,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                 case SUMMON_TYPE_TOTEM:
                 {
                     summon = m_caster->GetMap()->SummonCreature(entry, pos, properties, duration, m_originalCaster);
+					//summon->setFaction(m_originalCaster->getFaction());
                     if (!summon || !summon->isTotem())
                         return;
 
@@ -3355,6 +3356,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
 
                         if (properties->Category == SUMMON_CATEGORY_ALLY)
                         {
+							// why does faction not get applied? do we overwrite somewhere?
                             summon->SetUInt64Value(UNIT_FIELD_SUMMONEDBY, m_originalCaster->GetGUID());
                             summon->setFaction(m_originalCaster->getFaction());
                             summon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
