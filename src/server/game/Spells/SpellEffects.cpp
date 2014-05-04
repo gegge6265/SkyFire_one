@@ -3266,7 +3266,7 @@ void Spell::EffectApplyAreaAura(SpellEffIndex effIndex)
 
 void Spell::EffectSummonType(SpellEffIndex effIndex)
 {
-    uint32 entry = m_spellInfo->EffectMiscValue[effIndex];
+	uint32 entry = m_spellInfo->EffectMiscValue[effIndex];
     if (!entry)
         return;
 
@@ -3310,6 +3310,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                 case SUMMON_TYPE_TOTEM:
                 {
                     summon = m_caster->GetMap()->SummonCreature(entry, pos, properties, duration, m_originalCaster);
+					//summon->setFaction(m_originalCaster->getFaction());
                     if (!summon || !summon->isTotem())
                         return;
 
@@ -3355,6 +3356,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
 
                         if (properties->Category == SUMMON_CATEGORY_ALLY)
                         {
+							// why does faction not get applied? do we overwrite somewhere?
                             summon->SetUInt64Value(UNIT_FIELD_SUMMONEDBY, m_originalCaster->GetGUID());
                             summon->setFaction(m_originalCaster->getFaction());
                             summon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
@@ -4524,6 +4526,27 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                     unitTarget->RemoveSingleAuraFromStack(24575, 0);
                     unitTarget->RemoveSingleAuraFromStack(24575, 1);
                     return;
+				// PoisonousBlood
+				case 24320:
+				{
+					float radius = GetSpellRadius(m_spellInfo, effIndex, false);
+                    if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->GetDistance(m_caster) <= radius && unitTarget != m_caster)
+                        unitTarget->CastSpell(unitTarget, 24321, true);
+
+                    break;
+				}
+				// BloodSiphon
+				case 24324:
+				{
+					float radius = GetSpellRadius(m_spellInfo, effIndex, false);
+                    if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER && unitTarget->GetDistance(m_caster) <= radius && unitTarget != m_caster)
+                        if (unitTarget->HasAura(24321,0)){
+							unitTarget->CastSpell(m_caster, 24323, true);
+						}
+						else
+							unitTarget->CastSpell(m_caster, 24322, true);
+					break;
+				}
                 // Pirate Costume
                 case 24717:
                 {
