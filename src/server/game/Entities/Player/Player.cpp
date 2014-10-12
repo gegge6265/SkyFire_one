@@ -14218,54 +14218,60 @@ float Player::GetFloatValueFromDB(uint16 index, uint64 guid)
 
 bool Player::LoadFromDB(uint32 guid, SqlQueryHolder *holder)
 {
-    //                                                       0     1        2     3     4     5      6       7      8   9      10           11            12
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT guid, account, data, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags, "
-    // 13          14          15          16   17           18        19         20         21         22          23           24                 25
-    //"position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost, "
-    // 26                 27       28       29       30       31         32           33            34        35    36      37                 38         39
-    //"resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty, "
-    // 40           41                42                43                    44          45          46              47           48               49              50
-    //"arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk, "
-    // 51      52         53         54          55           56             57
-    //"health, powerMana, powerRage, powerFocus, powerEnergy, powerHapiness, instance_id FROM characters WHERE guid = '%u'", guid);
-    QueryResult_AutoPtr result = holder->GetResult(PLAYER_LOGIN_QUERY_LOADFROM);
+	//                                                       0     1        2     3     4     5      6       7      8   9      10           11            12
+	//QueryResult *result = CharacterDatabase.PQuery("SELECT guid, account, data, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags, "
+	// 13          14          15          16   17           18        19         20         21         22          23           24                 25
+	//"position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost, "
+	// 26                 27       28       29       30       31         32           33            34        35    36      37                 38         39
+	//"resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty, "
+	// 40           41                42                43                    44          45          46              47           48               49              50
+	//"arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk, "
+	// 51      52         53         54          55           56             57
+	//"health, powerMana, powerRage, powerFocus, powerEnergy, powerHapiness, instance_id FROM characters WHERE guid = '%u'", guid);
+	QueryResult_AutoPtr result = holder->GetResult(PLAYER_LOGIN_QUERY_LOADFROM);
 
-    if (!result)
-    {
-        sLog->outError("Player (GUID: %u) not found in table `characters`, can't load. ", guid);
-        return false;
-    }
+	if (!result)
+	{
+		sLog->outError("Player (GUID: %u) not found in table `characters`, can't load. ", guid);
+		return false;
+	}
 
-    Field *fields = result->Fetch();
+	Field *fields = result->Fetch();
 
-    uint32 dbAccountId = fields[1].GetUInt32();
+	uint32 dbAccountId = fields[1].GetUInt32();
 
-    // check if the character's account in the db and the logged in account match.
-    // player should be able to load/delete character only with correct account!
-    if (dbAccountId != GetSession()->GetAccountId())
-    {
-        sLog->outError("Player (GUID: %u) loading from wrong account (is: %u, should be: %u)", guid, GetSession()->GetAccountId(), dbAccountId);
-        return false;
-    }
+	// check if the character's account in the db and the logged in account match.
+	// player should be able to load/delete character only with correct account!
+	if (dbAccountId != GetSession()->GetAccountId())
+	{
+		sLog->outError("Player (GUID: %u) loading from wrong account (is: %u, should be: %u)", guid, GetSession()->GetAccountId(), dbAccountId);
+		return false;
+	}
 
-    Object::_Create(guid, 0, HIGHGUID_PLAYER);
+	Object::_Create(guid, 0, HIGHGUID_PLAYER);
 
-    m_name = fields[3].GetCppString();
+	m_name = fields[3].GetCppString();
 
-    // check name limitations
-    if (!ObjectMgr::IsValidName(m_name) || GetSession()->GetSecurity() == SEC_PLAYER && sObjectMgr->IsReservedName(m_name))
-    {
-        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid ='%u'", uint32(AT_LOGIN_RENAME), guid);
-        return false;
-    }
-
-    if (!LoadValues(fields[2].GetString()))
-    {
-        sLog->outError("Player #%d has invalid data in data field. Not loaded.", GUID_LOPART(guid));
-        return false;
-    }
-
-    // overwrite possible wrong/corrupted guid
+	// check name limitations
+	if (!ObjectMgr::IsValidName(m_name) || GetSession()->GetSecurity() == SEC_PLAYER && sObjectMgr->IsReservedName(m_name))
+	{
+		CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid ='%u'", uint32(AT_LOGIN_RENAME), guid);
+		return false;
+	}
+	if (fields[2].GetString() == "" || fields[2].GetString() == NULL)
+	{
+		//non fa nulla
+	}
+	else
+	{
+		if (!LoadValues(fields[2].GetString()))
+		{
+			sLog->outError("Player #%d has invalid data in data field. Not loaded.", GUID_LOPART(guid));
+			return false;
+		}
+	}
+    
+	// overwrite possible wrong/corrupted guid
     SetUInt64Value(OBJECT_FIELD_GUID, MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
 
     // overwrite some data fields
