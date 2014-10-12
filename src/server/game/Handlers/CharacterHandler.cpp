@@ -44,6 +44,18 @@
 #include "MapManager.h"
 #include "SystemConfig.h"
 #include "ScriptMgr.h"
+#include "Object.h"
+#include "ObjectGuid.h"
+#include "ByteBuffer.h"
+#include "UpdateFields.h"
+#include "UpdateData.h"
+#include "GridReference.h"
+#include "Map.h"
+#include "ObjectMgr.h"
+
+#include <set>
+#include <string>
+
 
 class LoginQueryHolder : public SqlQueryHolder
 {
@@ -440,6 +452,15 @@ void WorldSession::HandleCharDeleteOpcode(WorldPacket& recv_data)
     SendPacket(&data);
 }
 
+uint32 *m_uint32Values;
+
+#define ASSERT WPAssert
+uint16 m_valuesCount;
+const uint32& GetUInt32Value(uint16 index)
+{
+    ASSERT(index < m_valuesCount);
+    return m_uint32Values[index];
+}
 void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recv_data)
 {
     if (PlayerLoading() || GetPlayer() != NULL)
@@ -465,14 +486,23 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recv_data)
         m_playerLoading = false;
         return;
     }
-
+    
+        
     CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
 }
 
 void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
 {
     uint64 playerGuid = holder->GetGuid();
+    uint16 i;
+    std::ostringstream ss;
+    m_valuesCount = PLAYER_END;
+    ss << "UPDATE characters SET data = '";
+    for (i = 0; i < m_valuesCount; ++i)
+        ss << GetUInt32Value(i) << " ";
+    ss << "' WHERE guid = %d;", GUID_LOPART(playerGuid);
 
+    CharacterDatabase.Execute(ss.str().c_str());
     Player* pCurrChar = new Player(this);
      // for send server info and strings (config)
     ChatHandler chH = ChatHandler(pCurrChar);
