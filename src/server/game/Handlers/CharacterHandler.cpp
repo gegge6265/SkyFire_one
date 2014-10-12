@@ -494,7 +494,7 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recv_data)
 void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
 {
     uint64 playerGuid = holder->GetGuid();
-    uint16 i;
+    /*uint16 i;
     std::ostringstream ss;
     m_valuesCount = PLAYER_END;
     ss << "UPDATE characters SET data = '";
@@ -502,8 +502,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
         ss << GetUInt32Value(i) << " ";
     ss << "' WHERE guid = %d;", GUID_LOPART(playerGuid);
 
-    CharacterDatabase.Execute(ss.str().c_str());
+    CharacterDatabase.Execute(ss.str().c_str());*/
     Player* pCurrChar = new Player(this);
+    pCurrChar->SaveToDB();
      // for send server info and strings (config)
     ChatHandler chH = ChatHandler(pCurrChar);
 
