@@ -1320,7 +1320,6 @@ void WorldSession::HandleFarSightOpcode(WorldPacket& recv_data)
 void WorldSession::HandleSetTitleOpcode(WorldPacket& recv_data)
 {
     sLog->outDebug("CMSG_SET_TITLE");
-
     int32 title;
     recv_data >> title;
 

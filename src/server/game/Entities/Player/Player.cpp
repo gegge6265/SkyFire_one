@@ -1055,8 +1055,11 @@ void Player::Update(uint32 p_time)
     SetCanDelayTeleport(true);
     Unit::Update(p_time);
     SetCanDelayTeleport(false);
-
-    time_t now = time(NULL);
+		
+	if (!m_taxi.empty())
+		CleanupAfterTaxiFlight();
+	
+	time_t now = time(NULL);
 
     UpdatePvPFlag(now);
 
@@ -14258,18 +14261,13 @@ bool Player::LoadFromDB(uint32 guid, SqlQueryHolder *holder)
 		CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid ='%u'", uint32(AT_LOGIN_RENAME), guid);
 		return false;
 	}
-	if (fields[2].GetString() == "" || fields[2].GetString() == NULL)
-	{
-		//non fa nulla
-	}
-	else
-	{
+	
 		if (!LoadValues(fields[2].GetString()))
 		{
 			sLog->outError("Player #%d has invalid data in data field. Not loaded.", GUID_LOPART(guid));
 			return false;
 		}
-	}
+	
     
 	// overwrite possible wrong/corrupted guid
     SetUInt64Value(OBJECT_FIELD_GUID, MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
@@ -17496,7 +17494,7 @@ void Player::CleanupAfterTaxiFlight()
 
 void Player::ContinueTaxiFlight()
 {
-    uint32 sourceNode = m_taxi.GetTaxiSource();
+    uint32 sourceNode = m_taxi.NextTaxiDestination();
     if (!sourceNode)
         return;
 

@@ -804,7 +804,8 @@ class PlayerTaxi
         std::string SaveTaxiDestinationsToString();
 
         void ClearTaxiDestinations() { m_TaxiDestinations.clear(); }
-        void AddTaxiDestination(uint32 dest) { m_TaxiDestinations.push_back(dest); }
+        void AddTaxiDestination(uint32 dest) { m_TaxiDestinations.push_back(dest);}
+		
         uint32 GetTaxiSource() const { return m_TaxiDestinations.empty() ? 0 : m_TaxiDestinations.front(); }
         uint32 GetTaxiDestination() const { return m_TaxiDestinations.size() < 2 ? 0 : m_TaxiDestinations[1]; }
         uint32 GetCurrentTaxiPath() const;
