@@ -1056,9 +1056,16 @@ void Player::Update(uint32 p_time)
     Unit::Update(p_time);
     SetCanDelayTeleport(false);
 		
-	if (!m_taxi.empty())
-		CleanupAfterTaxiFlight();
-	
+	if (!m_taxi.empty()) {
+		uint32 path = m_taxi.GetCurrentTaxiPath();
+		TaxiPathNodeList const& nodeList = sTaxiPathNodesByPath[path];
+		TaxiPathNode const& lastNode = nodeList[nodeList.size() - 1];
+		if (IsInRange3d(lastNode.x, lastNode.y, lastNode.z, 0.0f, 5.0f)){
+			CleanupAfterTaxiFlight();
+			sLog->outDebug("Player arrivato in prossimità dell'ultimo nodo");
+		}
+
+	}
 	time_t now = time(NULL);
 
     UpdatePvPFlag(now);
@@ -17494,7 +17501,7 @@ void Player::CleanupAfterTaxiFlight()
 
 void Player::ContinueTaxiFlight()
 {
-    uint32 sourceNode = m_taxi.NextTaxiDestination();
+    uint32 sourceNode = m_taxi.GetTaxiSource();
     if (!sourceNode)
         return;
 
